@@ -1,586 +1,316 @@
-# IBM Software Hub Upgrade from 5.3.1 to 5.3.1
+# IBM Software Hub 5.3.1 Patch Runbook
 
-## Upgrade Context
-- **OCP:** 4.19
-- **SWH:** 5.3.1 → 5.3.1
-- **FileStorageClass:** portworx-shared-gp3
-- **BlockStorageClass:** portworx-shared-gp3
-- **Components:** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
-- **PrivateImageRegistry:** Yes
+## Patch Context
+
+**Customer:** TSYS
+
+**Environment:** Production
+
+**Patch Date:** 2026-07-15
+
+**Target Patch:** Patch 8
+
+### Components to be Patched
+
+**IBM Software Hub Components (6):** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
+
+**Scheduling Service:** ✓ Included
+
+### Service Instances
+
+No service instance updates required for this patch.
+
+
+### Air-Gapped Environment
+
+This is an air-gapped environment. Image mirroring steps are included.
+
+
+---
 
 ## Table of Contents
-1. [Pre-upgrade Tasks](#pre-upgrade-tasks)
-2. [Upgrade Execution](#upgrade-execution)
-3. [Post-upgrade Tasks](#post-upgrade-tasks)
+1. [Patch Execution](#patch-execution)
+2. [Post-Patch Tasks](#post-patch-tasks)
 
-## Pre-requisites
-
-### 1. Backup of the cluster is done
-
-Backup your Cloud Pak for Data cluster before the upgrade.
-
-**Note:**
-Make sure there are no scheduled backups conflicting with the scheduled upgrade.
-
-### 2. The image mirroring completed successfully
-
-Since you are using a private container registry, you must mirror the updated images from the IBM® Entitled Registry to your private container registry at `<YOUR_PRIVATE_REGISTRY>`.
-
-### 3. The CASE files and cluster resource files downloaded successfully
-
-Before upgrading IBM Scheduling, the IBM Software Hub platform, or any services, you must download the required cluster‑scoped resources—such as ClusterRoles and ClusterRoleBindings—for the components you plan to upgrade. Ensure that these files are available on the bastion node for use during the upgrade.
-
-For more information, see [Downloading CASE packages](https://www.ibm.com/docs/en/software-hub/5.4.x?topic=pruirn-downloading-case-packages-1).
+---
 
 
-### 4. The permissions required for the upgrade is ready
+## Prerequisites
 
-- **OpenShift cluster permissions**
-  
-  An OpenShift cluster administrator can complete all of the installation tasks.
-  
-  However, if you want to enable users with fewer permissions to complete some of the installation tasks, refer to the IBM Documentation about `Reauthorizing an instance administrator with the minimum RBAC to upgrade components`.
+**IMPORTANT:** This runbook assumes the following tasks have been completed by the cluster administrator:
 
-- **IBM Software Hub permissions**
-  
-  The Cloud Pak for Data administrator role or permissions is required for upgrading the service instances.
+1. CASE files downloaded for all components
+2. Images mirrored to registry (if air-gapped)
+3. Cluster administrator has necessary permissions
+4. Backup of the cluster completed
 
-- **Registry permissions**
-  - Permission to access the private image registry at `<YOUR_PRIVATE_REGISTRY>` for pushing or pulling images
+If these prerequisites are not met, please complete them before proceeding with patch execution.
 
-- **Bastion node access**
-  - Access to the bastion node for executing the upgrade commands
-
-### 5. A pre-upgrade health check is made to ensure the cluster's readiness for upgrade
-
-- The OpenShift cluster, persistent storage, IBM Software Hub platform and services are in healthy status.
-
-### 6. Migrating to Red Hat OpenShift certificate manager
-
-The IBM Certificate manager is deprecated.
-
-If the IBM Certificate manager (ibm-cert-manager) is installed on your cluster, refer to IBM Documentation to migrate your certificates from the IBM Certificate manager to the Red Hat OpenShift certificate manager (cert-manager Operator).
-
-[Migrating from the IBM Certificate manager to the Red Hat OpenShift certificate manager](https://www.ibm.com/docs/en/software-hub/5.4.x?topic=upgrading-migrating-red-hat-openshift-certificate-manager)
+---
 
 
+# Patch Execution
 
-# Pre-upgrade
+## Update Cluster-Scoped Resources for Scheduling Service
 
-**Note:**
-Sourcing the latest environment variables used by this environment before proceeding with the following procedures. For more information, see [Updating your environment variables script](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=cri-updating-your-environment-variables-script-1).
+**IBM Documentation:** [Updating cluster-scoped resources for the scheduling service](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=patches-updating-cluster-scoped-resources-scheduling-service)
+
+**Note:** If the scheduling service is not installed in your environment, skip this section and proceed to applying the patch to the scheduling service section.
+
+#### 1. Verify Scheduling Service Installation
+
+Check if the scheduling service is installed:
 
 ```bash
-source ./cpd_vars.sh
+oc get scheduling -A
 ```
 
-## Pre-upgrade check
+**If no resources are found:** Skip this section and the next section (Apply Patch to Scheduling Service), then proceed to updating cluster-scoped resources for IBM Software Hub.
 
-### Checking the health of your cluster
+**If scheduling resources are found:** Continue with the steps below.
+
+#### 2. Generate Cluster-Scoped Resources for Scheduling Service
+
+Generate the `cluster_scoped_resources.yaml` file for the scheduling service:
 
 ```bash
-${OC_LOGIN}
-oc get nodes,co,mcp
-
-${CPDM_OC_LOGIN}
-cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
-cpd-cli health cluster
-cpd-cli health nodes
-cpd-cli health operators --operator_ns=${PROJECT_CPD_INST_OPERATORS} --control_plane_ns=${PROJECT_CPD_INST_OPERANDS}
-cpd-cli health operands --control_plane_ns=${PROJECT_CPD_INST_OPERANDS}
-```
-
-### Checking the known issues before the upgrade
-
-- [Known issues and limitations for IBM Software Hub](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=overview-known-issues-limitations)
-
-## Updating the IBM Software Hub command-line interface
-
-### Updating the IBM Software Hub command-line interface
-
-Update the cpd-cli utility to the latest version of 5.3.x (v14.3.1.7). For detailed documentation and instructions, see [Update the cpd-cli utility](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=workstations-updating-software-hub-cli).
-
-### Obtaining the olm-utils-v4 image
-
-All IBM Software Hub customers are entitled to use the olm-utils-v4 image. The cpd-cli uses podman to pull and manage the olm-utils-v4 container image. When the workstation is connected to the internet, run the following command to update the olm-utils-v4 image on the workstation:
-
-```bash
-cpd-cli manage restart-container
-```
-
-Wait for the cpd-cli to return the following messages:
-
-```
-[SUCCESS] ... Successfully pulled the container image icr.io/cpopen/cpd/olm-utils-v4:${VERSION}
-[SUCCESS] ... Successfully started the container olm-utils-play-v4
-[SUCCESS] ... Container olm-utils-play-v4 has been re-created
-```
-
-The version of the olm-utils-v4 image should be the same as the version of IBM Software Hub that you plan to install.
-
-For more information, see [Obtaining the olm-utils-v4 image](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=pruirn-obtaining-olm-utils-v4-image-1).
-
-
-### Installing Helm CLI
-
-[Installing Helm](https://www.ibm.com/links?url=https%3A%2F%2Fhelm.sh%2Fdocs%2Fintro%2Finstall%2F)
-
-# Upgrade
-
-## Updating your environment variables script
-
-> ⚠️ **Important:**
-Ensure that your environment variables script includes the correct information for the instance of IBM Software Hub that you want to upgrade.
-
-[Updating your environment variables script](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=cri-updating-your-environment-variables-script)
-
-### Editing your environment variables file
-
-1. Open your existing environment variable shell script in a text editor.
-
-2. Locate the `VERSION` entry and specify the version of IBM Software Hub that you want to upgrade to:
-```bash
-export VERSION=5.3.1
-```
-
-3. Set or update the `PATCH_ID` environment variable based on the patch that you want to install:
-```bash
-export PATCH_ID=<target_patch_number>
-```
-
-
-
-# Upgrade
-
-## Upgrading the License Service
-
-### Get the project of the License service
-
-If you're not sure which project the License Service is in, run the following command:
-```
-oc get deployment -A | grep ibm-licensing-operator
-```
-
-### Log in to the Red Hat OpenShift Container Platform cluster
-```
-${CPDM_OC_LOGIN}
-```
-
-### Upgrading the License Service
-
-```
-cpd-cli manage apply-cluster-components \
---release=${VERSION} \
---patch_id=${PATCH_ID} \
---license_acceptance=true \
---licensing_ns=${PROJECT_LICENSE_SERVICE}
-```
-Confirm that the License Service pods are Running or Completed:
-
-```
-oc get pods --namespace=${PROJECT_LICENSE_SERVICE}
-```
-
-## Preparing to upgrade IBM Software Hub
-
-### Updating the cluster-scoped resources for the platform and services
-
-1.Generate cluster-scoped resources for platform and services
-
-```
 cpd-cli manage case-download \
---components=${COMPONENTS} \
---release=${VERSION} \
---patch_id=${PATCH_ID} \
---operator_ns=${PROJECT_CPD_INST_OPERATORS} \
---cluster_resources=true
+  --components=scheduler \
+  --release=5.3.1 \
+  --patch_id=${PATCH_ID} \
+  --scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
+  --case_download=false \
+  --cluster_resources=true
 ```
 
-2.Change to the `work` directory. 
-<br>
-The default location of the work directory is `cpd-cli-workspace/olm-utils-workspace/work`.
+Change to the work directory:
 
-```
+```bash
 cd cpd-cli-workspace/olm-utils-workspace/work
 ```
 
-3.Log in to Red Hat® OpenShift® Container Platform as a cluster administrator
-```
+Log in to Red Hat OpenShift Container Platform as a cluster administrator:
+
+```bash
 ${OC_LOGIN}
 ```
 
-4.Apply the cluster-scoped resources for the platform and services
-```
+**Remember:** `OC_LOGIN` is an alias for the `oc login` command.
+
+Apply the cluster-scoped resources:
+
+```bash
 oc apply -f cluster_scoped_resources.yaml \
---server-side \
---force-conflicts
+  --server-side \
+  --force-conflicts
 ```
 
-### Creating image pull secrets for an instance of IBM Software Hub
-1.Log in to Red Hat® OpenShift® Container Platform as a user with sufficient permissions to complete the task.
-```
-${OC_LOGIN}
-```
-
-2.Create a file named dockerconfig.json based on where your cluster pulls images from.
-For Private container registry:
-
-```
-cat <<EOF > dockerconfig.json 
-{
-  "auths": {
-    "${PRIVATE_REGISTRY_LOCATION}": {
-      "auth": "${IMAGE_PULL_CREDENTIALS}"
-    }
-  }
-}
-EOF
-```
-
-
-3.Create the image pull secret in the operators project for the instance.
-
-```
-oc create secret docker-registry ${IMAGE_PULL_SECRET} \
---from-file ".dockerconfigjson=dockerconfig.json" \
---namespace=${PROJECT_CPD_INST_OPERATORS}
-```
-
-4.Create the image pull secret in the operands project for the instance:
-```
-oc create secret docker-registry ${IMAGE_PULL_SECRET} \
---from-file ".dockerconfigjson=dockerconfig.json" \
---namespace=${PROJECT_CPD_INST_OPERANDS}
-```
-
-## Upgrading IBM Software Hub
-
-
-### Run the cpd-cli manage login-to-ocp command to log in to the cluster
-```
-${CPDM_OC_LOGIN}
-```
-
-### Upgrading the required operators and custom resources for the instance
-```
-cpd-cli manage install-components \
---license_acceptance=true \
---components=cpd_platform \
---release=${VERSION} \
---patch_id=${PATCH_ID} \
---operator_ns=${PROJECT_CPD_INST_OPERATORS} \
---instance_ns=${PROJECT_CPD_INST_OPERANDS} \
---image_pull_prefix=${IMAGE_PULL_PREFIX} \
---image_pull_secret=${IMAGE_PULL_SECRET} \
---run_storage_tests=false \
---upgrade=true
-```
-
-Once the above command `cpd-cli manage install-components` is completed, make sure the status of the IBM Software Hub is in 'Completed' status.
-```
-cpd-cli manage get-cr-status \
---cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \ 
---components=cpd_platform
-```
-
-### Applying the RSI patches
-Run the following command to re-apply your existing custom patches.
-```
-cpd-cli manage apply-rsi-patches --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
-```
-
-Check the RSI patches status again: 
-```
-cpd-cli manage get-rsi-patch-info --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} --all
-```
-
-## Upgrading Analytics Engine Powered by Apache Spark
-
-### Run the cpd-cli manage login-to-ocp command to log in to the cluster
-```
-${CPDM_OC_LOGIN}
-```
-
-### Upgrading the operator and custom resource for the service
+**Optional:** Rename the file to keep a record:
 
 ```bash
-cpd-cli manage install-components \
-  --license_acceptance=true \
-  --components=analyticsengine \
-  --release=${VERSION} \
+mv cluster_scoped_resources.yaml 5.3.1-PATCH-${PROJECT_SCHEDULING_SERVICE}-cluster_scoped_resources.yaml
+```
+
+
+## Apply Patch to Scheduling Service
+
+**IBM Documentation:** [Applying a patch to the scheduling service](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=patches-applying-patch-scheduling-service)
+
+**Note:** If the scheduling service is not installed, this section was skipped in the previous step.
+
+#### 1. Verify Environment Variables
+
+Ensure environment variables are set from previous steps:
+
+```bash
+echo $PROJECT_SCHEDULING_SERVICE
+echo $PATCH_ID
+echo $IMAGE_PULL_PREFIX
+echo $IMAGE_PULL_SECRET
+```
+
+#### 2. Apply Patch to Scheduling Service
+
+**Applying specific patch:**
+
+```bash
+cpd-cli manage apply-patch \
+  --release=5.3.1 \
+  --patch_id=${PATCH_ID} \
+  --scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
+  --image_pull_prefix=${IMAGE_PULL_PREFIX} \
+  --image_pull_secret=${IMAGE_PULL_SECRET}
+```
+
+#### 3. Monitor Scheduling Service Pods
+
+```bash
+oc get pods --namespace=${PROJECT_SCHEDULING_SERVICE}
+```
+
+## Update Cluster-Scoped Resources for IBM Software Hub
+
+**IBM Documentation:** [Updating cluster-scoped resources for the instance](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=patches-updating-cluster-scoped-resources-instance)
+
+#### 1. Generate Cluster-Scoped Resources
+
+Generate the `cluster_scoped_resources.yaml` file for the instance:
+
+```bash
+cpd-cli manage case-download \
+  --components=${COMPONENTS_TO_PATCH} \
+  --release=5.3.1 \
+  --patch_id=${PATCH_ID} \
+  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+  --case_download=false \
+  --cluster_resources=true
+```
+
+Change to the work directory:
+
+```bash
+cd cpd-cli-workspace/olm-utils-workspace/work
+```
+
+#### 2. Apply Cluster-Scoped Resources
+
+Apply the cluster-scoped resources:
+
+```bash
+oc apply -f cluster_scoped_resources.yaml \
+  --server-side \
+  --force-conflicts
+```
+
+**Optional:** Rename the file to keep a record:
+
+```bash
+mv cluster_scoped_resources.yaml 5.3.1-PATCH-${PROJECT_CPD_INST_OPERATORS}-cluster_scoped_resources.yaml
+```
+
+## Apply Patch to Services and Components
+
+**IBM Documentation:** [Applying a patch](https://www.ibm.com/docs/en/software-hub/5.3.x?topic=patches-applying-patch)
+
+**Note:** This step patches the IBM Software Hub platform and all installed services/components (cpd_platform, zen, watson_discovery, etc.). Service instance updates are performed separately in a later step.
+
+#### 1. Verify Prerequisites
+
+Before applying the patch, verify environment variables and component status:
+
+```bash
+# Verify environment variables
+echo $PROJECT_CPD_INST_OPERATORS
+echo $PROJECT_CPD_INST_OPERANDS
+echo $PATCH_ID
+echo $IMAGE_PULL_PREFIX
+echo $IMAGE_PULL_SECRET
+
+# Check all components are ready
+cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+```
+
+#### 2. Apply Patch to Services and Components
+
+**Note:** This command applies patches to ALL installed services and components and runs for an extended period (typically 30-90 minutes). Using `nohup` ensures the command continues if the terminal session disconnects.
+
+**Applying specific patch:**
+
+```bash
+nohup cpd-cli manage apply-patch \
+  --release=5.3.1 \
   --patch_id=${PATCH_ID} \
   --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
   --instance_ns=${PROJECT_CPD_INST_OPERANDS} \
   --image_pull_prefix=${IMAGE_PULL_PREFIX} \
-  --image_pull_secret=${IMAGE_PULL_SECRET} \
-  --upgrade=true
+  --image_pull_secret=${IMAGE_PULL_SECRET} > patch_output.log 2>&1 &
 ```
 
-Once the above command `cpd-cli manage install-components` completed successfully, you can run the `cpd-cli manage get-cr-status` command for the validation.
+#### 3. Monitor Patching Progress
 
-```
-cpd-cli manage get-cr-status \
---cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
---components=analyticsengine
-```
-
-## Upgrading DataStage Enterprise Plus
-
-### Run the cpd-cli manage login-to-ocp command to log in to the cluster
-```
-${CPDM_OC_LOGIN}
-```
-
-### Upgrading the operator and custom resource for the service
+Monitor the output log:
 
 ```bash
-cpd-cli manage install-components \
-  --license_acceptance=true \
-  --components=datastage_ent_plus \
-  --release=${VERSION} \
-  --patch_id=${PATCH_ID} \
-  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
-  --instance_ns=${PROJECT_CPD_INST_OPERANDS} \
-  --image_pull_prefix=${IMAGE_PULL_PREFIX} \
-  --image_pull_secret=${IMAGE_PULL_SECRET} \
-  --upgrade=true
+tail -f -n 100 patch_output.log
 ```
 
-Once the above command `cpd-cli manage install-components` completed successfully, you can run the `cpd-cli manage get-cr-status` command for the validation.
+Check for completion message: `[SUCCESS] ... The apply-patch command ran successfully.`
 
-```
-cpd-cli manage get-cr-status \
---cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
---components=datastage_ent_plus
-```
-
-## Upgrading Watson Studio Pipelines
-
-### Run the cpd-cli manage login-to-ocp command to log in to the cluster
-```
-${CPDM_OC_LOGIN}
-```
-
-### Upgrading the operator and custom resource for the service
+Monitor the overall patching progress:
 
 ```bash
-cpd-cli manage install-components \
-  --license_acceptance=true \
-  --components=ws_pipelines \
-  --release=${VERSION} \
-  --patch_id=${PATCH_ID} \
-  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
-  --instance_ns=${PROJECT_CPD_INST_OPERANDS} \
-  --image_pull_prefix=${IMAGE_PULL_PREFIX} \
-  --image_pull_secret=${IMAGE_PULL_SECRET} \
-  --upgrade=true
+# Watch component status
+watch -n 60 'cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}'
 ```
 
-Once the above command `cpd-cli manage install-components` completed successfully, you can run the `cpd-cli manage get-cr-status` command for the validation.
+#### 4. Confirm Operands Status
 
-```
-cpd-cli manage get-cr-status \
---cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
---components=ws_pipelines
-```
-
-## Upgrading IBM Knowledge Catalog
-
-### Run the cpd-cli manage login-to-ocp command to log in to the cluster
-```
-${CPDM_OC_LOGIN}
-```
-
-### Upgrading the operator and custom resource for the service
+Confirm that the status of all operands is `Completed`:
 
 ```bash
-cpd-cli manage install-components \
-  --license_acceptance=true \
-  --components=wkc \
-  --release=${VERSION} \
-  --patch_id=${PATCH_ID} \
-  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
-  --instance_ns=${PROJECT_CPD_INST_OPERANDS} \
-  --image_pull_prefix=${IMAGE_PULL_PREFIX} \
-  --image_pull_secret=${IMAGE_PULL_SECRET} \
-  --upgrade=true
-```
-
-Once the above command `cpd-cli manage install-components` completed successfully, you can run the `cpd-cli manage get-cr-status` command for the validation.
-
-```
 cpd-cli manage get-cr-status \
---cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
---components=wkc
+  --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
-## Upgrading MANTA Automated Data Lineage for IBM Cloud Pak for Data
-
-### Run the cpd-cli manage login-to-ocp command to log in to the cluster
-```
-${CPDM_OC_LOGIN}
-```
-
-### Upgrading the operator and custom resource for the service
+Check for any pods not in Running state:
 
 ```bash
-cpd-cli manage install-components \
-  --license_acceptance=true \
-  --components=mantaflow \
-  --release=${VERSION} \
-  --patch_id=${PATCH_ID} \
-  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
-  --instance_ns=${PROJECT_CPD_INST_OPERANDS} \
-  --image_pull_prefix=${IMAGE_PULL_PREFIX} \
-  --image_pull_secret=${IMAGE_PULL_SECRET} \
-  --upgrade=true
+oc get pods -n ${PROJECT_CPD_INST_OPERANDS} | grep -v Running | grep -v Completed
 ```
 
-Once the above command `cpd-cli manage install-components` completed successfully, you can run the `cpd-cli manage get-cr-status` command for the validation.
+# Post-Patch Tasks
 
+## Verify CPD Profile
+
+#### 1. Verify Existing Profile
+
+Confirm your CPD profile is set up and working:
+
+```bash
+cpd-cli service-instance list --profile=cpd-admin
 ```
+
+#### 2. Verify Patched Instance Status
+
+Check the status of the patched instance:
+
+```bash
 cpd-cli manage get-cr-status \
---cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
---components=mantaflow
+  --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
+## Verify Patch Application
 
-# Post-upgrade
+#### 1. Verify IBM Software Hub and Component Versions
 
+Confirm the platform and all components are running the patched version:
 
-## Setting up a profile to upgrade service instances
-Create a profile on the workstation from which you will upgrade the service instances.
-
-<br>
-**Note:**
-The profile must be associated with a IBM Software Hub user who has either the following permissions:
-<br>
-- Create service instances (can_provision)
-- Manage service instances (manage_service_instances)
-
-<br>
-
-1.Generate the API key that you need for user authentication by going to your `Profile and settings` page in the web client and clicking `Generate API key`.
-
-<br>
-
-2. Set the following environment variables.
-<br>
-
-- Set the API_KEY to the API key that you obtained in the preceding step.
-```
-export API_KEY=<api-key>
+```bash
+cpd-cli manage get-cr-status \
+  --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
-- Set the CPD_USERNAME environment variable to your username.
-```
-export CPD_USERNAME=<user-name>
+#### 2. Verify Pod Health
+
+Check that all pods are running and healthy:
+
+```bash
+# Check for pods not in Running state
+oc get pods -n ${PROJECT_CPD_INST_OPERANDS} | grep -v Running | grep -v Completed
+
+# Check for pods with high restart counts
+oc get pods -n ${PROJECT_CPD_INST_OPERANDS} --sort-by=.status.containerStatuses[0].restartCount | tail -20
+
+# Check for pods in error states
+oc get pods -n ${PROJECT_CPD_INST_OPERANDS} --field-selector=status.phase!=Running,status.phase!=Succeeded
 ```
 
-- Set the LOCAL_USER environment variable to the name that you want to use for the local user configuration.
+#### 3. Verify Service Instance Status
 
-```
-export LOCAL_USER=<local-user>
-```
+Check that all service instances are ready:
 
-- Set the CPD_PROFILE_NAME environment variable to the name that you want to use for the profile.
-```
-export CPD_PROFILE_NAME=<cpd-profile-name>
-```
-
-- Set the CPD_PROFILE_URL environment variable to the URL of the instance that you want to connect to.
-```
-export CPD_PROFILE_URL=<cpd-url>
-```
-
-To get the URL of the web client, run the following command.
-```
-oc get route cpd \
-        --namespace=${PROJECT_CPD_INST_OPERANDS}
-```
- The command returns output with the following format.
-```
-cpd-namespace.apps.OCP-default-domain
-```
-
-Add https:// to the value that is returned. For example, `https://cpd-namespace.apps.OCP-default-domain`.
-
-- Create a local user configuration to store your username and API key by using the config users set command.
-```
-cpd-cli config users set ${LOCAL_USER} \
-    --username ${CPD_USERNAME} \
-    --apikey ${API_KEY}
-```
-
-Anytime you regenerate your API key, you must rerun this command to update your local user configuration.
-
-<br>
-
-- Create a profile to store the URL and to associate the profile with your local user configuration by using the config profiles set command.
-```
-cpd-cli config profiles set ${CPD_PROFILE_NAME} \
-    --user ${LOCAL_USER} \
-    --url ${CPD_PROFILE_URL}
-```
-For example:
-```
-    users:
-    - name: 682-d-engineer_1
-      user:
-        username: cpadmin
-        apikey: {base64: c1BPZnhRZ1pyTEVyeWdkdUpEdGtqT3lpMTdpcm9HWm5JSDcza3VDcQ==}
-
-    - name: my_profile
-      profile:
-        type: private
-        url: https://cpd-cpd-instance.apps.ivt564.cp.example.ibm.com
-        user: 682-d-engineer_1
-    ....
-```
-
-- Validate your configuration by using below command.
-
-You can now run cpd-cli commands with this profile as shown in the following example.
-```
+```bash
+# List all service instances
 cpd-cli service-instance list \
---profile=${CPD_PROFILE_NAME}
-```
-
-
-## Upgrading service instances
-### Upgrading service instance of analyticsengine
-
-- Upgrading the service instance
-
-```
-cpd-cli service-instance upgrade \
---service-type=spark \
---profile=${CPD_PROFILE_NAME} \
---all
-```
-
-- Validating the service instance upgrade status.
-
-```
-cpd-cli service-instance list \
---service-type=spark \
---profile=${CPD_PROFILE_NAME}
-```
-
-### Apply hot fixes (if applicable)
-
-If IBM Support has provided specific hotfixes for your environment, apply them according to the instructions provided.
-
-**Note:** Check with IBM Support to determine if any hotfixes are required for your specific configuration and version ().
-
-### Check if there are any remaining special tasks
-
-> ⚠️ **Important:**
-
-
-Check if there are any remaining special tasks for your services that need to be completed after the upgrade.
-
-
-
-
-
+  --profile=cpd-admin \
+  --all-namespaces
