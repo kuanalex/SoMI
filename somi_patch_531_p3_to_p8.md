@@ -9,6 +9,7 @@
 
 ### Components to be Patched
 **IBM Software Hub Components (6):** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
+
 **Scheduling Service:** n/a
 
 ### Service Instances
