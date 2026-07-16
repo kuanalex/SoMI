@@ -61,23 +61,11 @@ cpd-cli manage case-download \
   --cluster_resources=true
 ```
 
-Change to the work directory
-```bash
-cd cpd-cli-workspace/olm-utils-workspace/work
-```
-
 #### 2. Apply Cluster-Scoped Resources
 
-Apply the cluster-scoped resources
+Apply the cluster-scoped resources commands returned in the terminal (make sure the correct cpd-cli-workspace path is referenced)
 ```bash
-oc apply -f cluster_scoped_resources.yaml \
-  --server-side \
-  --force-conflicts
-```
-
-**Optional:** Rename the file to keep a record
-```bash
-mv cluster_scoped_resources.yaml 5.3.1-PATCH-${PROJECT_CPD_INST_OPERATORS}-cluster_scoped_resources.yaml
+oc apply -f /root/cpd-cli-workspace/olm-utils-workspace/work/cluster_scoped_resources.yaml --force-conflicts --server-side
 ```
 
 ## Apply Patch to Services and Components
