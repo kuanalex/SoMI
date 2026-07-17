@@ -170,35 +170,7 @@ Confirm your CPD profile is set up and working:
 cpd-cli service-instance list --profile=${CPD_PROFILE_NAME}
 ```
 
-#### 2. Verify Patched Instance Status
-
-Check the status of the patched instance:
-
-```bash
-cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
-```
-
-## Verify Patch Application
-
-#### 1. Verify IBM Software Hub and Component Versions
-
-Confirm the platform and all components are running the patched version:
-
-```bash
-cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
-```
-
-#### 2. Verify Pod Health
-
-Check that all pods are running and healthy
-
-Check for pods not in Running state:
-
-```bash
-oc get po -A -owide | egrep -v '([0-9])/\1' | egrep -v 'Completed'
-```
-
-#### 3. Patch Analytics Engine Instances
+#### 2. Patch Analytics Engine Instances
 
 To upgrade Analytics Engine powered by Apache Spark service instances:
 
@@ -209,13 +181,25 @@ cpd-cli service-instance upgrade \
   --all
 ```
 
-#### 4. Verify Service Instance Status
+#### 4. Verify CR, Service Instance and Pod Statuses
+
+Confirm the platform and all components are running the patched version:
+
+```bash
+cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+```
 
 Check that all service instances are ready
 
 List all service instances:
 ```bash
 cpd-cli service-instance list --profile=${CPD_PROFILE_NAME}
+```
+
+Check for pods not in Running state:
+
+```bash
+oc get po -A -owide | egrep -v '([0-9])/\1' | egrep -v 'Completed'
 ```
 
 **End of runbook**
