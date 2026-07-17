@@ -175,6 +175,16 @@ Check for problematic pods
 oc get pods -n ${PROJECT_CPD_INST_OPERANDS} | grep -v Running | grep -v Completed
 ```
 
+#### 3. Patch Analytics Engine Instances
+
+To upgrade Analytics Engine powered by Apache Spark service instances
+```bash
+cpd-cli service-instance upgrade \
+--service-type=spark \
+--profile=${CPD_PROFILE_NAME} \
+--all
+```
+
 #### 3. Verify Service Instance Status
 
 Check that all service instances are ready:
