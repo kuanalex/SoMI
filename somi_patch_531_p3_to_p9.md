@@ -1,4 +1,4 @@
-# IBM Software Hub 5.3.1 Patch Runbook
+# IBM Software Hub 5.3.1 Patch 3 to 5.3.1 Patch 9 Runbook
 
 ## Patch Context
 
@@ -8,7 +8,7 @@
 
 **Patch Date:** 2026-07-16
 
-**Target Patch:** Patch 8
+**Target Patch:** Patch 9
 
 ### Components to be Patched
 
@@ -42,10 +42,25 @@ This is an air-gapped environment. Image mirroring steps are included.
 
 **IMPORTANT:** This runbook assumes the following tasks have been completed by the cluster administrator:
 
-1. CASE files downloaded for all components
-2. Images mirrored to registry (if air-gapped)
-3. Cluster administrator has necessary permissions
-4. Backup of the cluster completed
+1. CASE files downloaded for all components on the client workstation:
+
+```bash
+cpd-cli manage case-download --components=cpd_platform,zen,cpfs,analyticsengine,ccs,datarefinery,datastage_ent,datastage_ent_plus,ibm_neo4j,mantaflow,opencontent_opensearch,opencontent_fdb,postgresql,wkc,ws_pipelines --release=5.3.1 --patch_id=9
+```
+   
+3. Images mirrored to registry (if air-gapped):
+
+```bash
+cpd-cli manage mirror-images \
+--components=${cpd_platform,zen,cpfs,analyticsengine,ccs,datarefinery,datastage_ent,datastage_ent_plus,ibm_neo4j,mantaflow,opencontent_opensearch,opencontent_fdb,postgresql,wkc,ws_pipelines} \
+--release=5.3.1 \
+--target_registry=${PRIVATE_REGISTRY_LOCATION} \
+--arch=${IMAGE_ARCH} \
+--case_download=false
+```
+
+4. Cluster administrator has necessary permissions
+5. Backup of the cluster completed
 
 If these prerequisites are not met, please complete them before proceeding with patch execution.
 
