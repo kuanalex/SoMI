@@ -135,10 +135,30 @@ nohup cpd-cli manage apply-patch \
 
 #### 3. Monitor Patching Progress
 
-Monitor the output log:
+Monitor the patch output log:
 
 ```bash
 tail -f -n 100 patch_output.log
+```
+
+In a separate termnial, monitor CR status
+
+Monitor cpd_platform progress
+
+```bash
+watch -n 3 "oc get zenservice lite-cr -o yaml | grep progress && oc get ibmcpd ibmcpd-cr -o yaml | grep progress"
+```
+
+Monitor analyticsengine, ccs, datastage, pxruntime, wkc progress:
+
+```
+watch -n 3 "oc get ae,ccs,datastage,pxruntime,wkc"
+```
+
+Monitor mantaflow and pipelines progress:
+
+```
+watch -n 3 "oc get mantaflow,wspipelines"
 ```
 
 Check for completion message: `[SUCCESS] ... The apply-patch command ran successfully.`
