@@ -189,9 +189,9 @@ cpd-cli service-instance upgrade \
 
 Check that all service instances are ready:
 
-List all service instances
+List all service instances again
 ```bash
-cpd-cli service-instance list --profile=${CPD_PROFILE_NAME} --all-namespaces
+cpd-cli service-instance list --profile=${CPD_PROFILE_NAME}
 ```
 
 **End of patch activity**
