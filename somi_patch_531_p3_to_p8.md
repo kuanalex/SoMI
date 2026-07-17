@@ -3,20 +3,25 @@
 
 ## Patch Context
 **Customer:** State of Michigan
+
 **Environment:** Production
+
 **Current Patch:** Patch 3
+
 **Target Patch:** Patch 8
 
 ### Components to be Patched
+
 **IBM Software Hub Components (6):** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
 
 **Scheduling Service:** n/a
 
 ### Service Instances
+
 **Analytics engine** instance(s) update required for this patch
 
 ### Air-Gapped Environment
-This is an air-gapped environment, ensure image mirroring steps are completed
+**This is an air-gapped environment**, ensure image mirroring steps are completed
 
 
 ---
