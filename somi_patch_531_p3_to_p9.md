@@ -1,4 +1,4 @@
-# IBM Software Hub 5.3.1 Patch 3 to 5.3.1 Patch 9 Runbook
+# IBM Software Hub 5.3.1.3 to 5.3.1.9 Patch Runbook
 
 ## Patch Context
 
