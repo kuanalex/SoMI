@@ -140,8 +140,7 @@ watch -n 60 'cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_O
 Confirm that the status of all operands is `Completed`:
 
 ```bash
-cpd-cli manage get-cr-status \
-  --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
 Check for any pods not in Running state:
