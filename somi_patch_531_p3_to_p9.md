@@ -125,12 +125,12 @@ cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 
 ```bash
 nohup cpd-cli manage apply-patch \
-  --release=5.3.1 \
-  --patch_id=${PATCH_ID} \
-  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
-  --instance_ns=${PROJECT_CPD_INST_OPERANDS} \
-  --image_pull_prefix=${IMAGE_PULL_PREFIX} \
-  --image_pull_secret=${IMAGE_PULL_SECRET} > patch_output.log 2>&1 &
+--release=5.3.1 \
+--patch_id=${PATCH_ID} \
+--operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+--instance_ns=${PROJECT_CPD_INST_OPERANDS} \
+--image_pull_prefix=${IMAGE_PULL_PREFIX} \
+--image_pull_secret=${IMAGE_PULL_SECRET} > patch_output.log 2>&1 &
 ```
 
 #### 3. Monitor Patching Progress
@@ -145,8 +145,8 @@ Check for completion message: `[SUCCESS] ... The apply-patch command ran success
 
 Monitor the overall patching progress:
 
+Watch component status:
 ```bash
-# Watch component status
 watch -n 60 'cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}'
 ```
 
@@ -161,7 +161,7 @@ cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 Check for any pods not in Running state:
 
 ```bash
-oc get pods -n ${PROJECT_CPD_INST_OPERANDS} | grep -v Running | grep -v Completed
+oc get po -A -owide | egrep -v '([0-9])/\1' | egrep -v 'Completed'
 ```
 
 # Post-Patch Tasks
@@ -196,17 +196,12 @@ cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 
 #### 2. Verify Pod Health
 
-Check that all pods are running and healthy:
+Check that all pods are running and healthy
+
+Check for pods not in Running state:
 
 ```bash
-# Check for pods not in Running state
 oc get pods -n ${PROJECT_CPD_INST_OPERANDS} | grep -v Running | grep -v Completed
-
-# Check for pods with high restart counts
-oc get pods -n ${PROJECT_CPD_INST_OPERANDS} --sort-by=.status.containerStatuses[0].restartCount | tail -20
-
-# Check for pods in error states
-oc get pods -n ${PROJECT_CPD_INST_OPERANDS} --field-selector=status.phase!=Running,status.phase!=Succeeded
 ```
 
 #### 3. Patch Analytics Engine Instances
@@ -222,9 +217,11 @@ cpd-cli service-instance upgrade \
 
 #### 4. Verify Service Instance Status
 
-Check that all service instances are ready:
+Check that all service instances are ready
 
 List all service instances:
-
 ```bash
 cpd-cli service-instance list --profile=${CPD_PROFILE_NAME}
+```
+
+**End of runbook**
