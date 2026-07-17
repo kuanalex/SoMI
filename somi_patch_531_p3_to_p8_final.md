@@ -16,9 +16,12 @@
 
 **Scheduling Service:** ✗ Not Installed
 
-### Service Instances
+### Service Instances to be Updated
 
-No service instance updates required for this patch.
+
+
+**Analytics Engine (Apache Spark):**
+- Manual instance upgrade required (see Post-Patch Tasks section)
 
 
 ### Air-Gapped Environment
@@ -164,8 +167,7 @@ cpd-cli service-instance list --profile=${CPD_PROFILE_NAME}
 Check the status of the patched instance:
 
 ```bash
-cpd-cli manage get-cr-status \
-  --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
 ## Verify Patch Application
@@ -175,8 +177,7 @@ cpd-cli manage get-cr-status \
 Confirm the platform and all components are running the patched version:
 
 ```bash
-cpd-cli manage get-cr-status \
-  --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
 #### 2. Verify Pod Health
