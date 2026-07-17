@@ -143,12 +143,6 @@ tail -f -n 100 patch_output.log
 
 Check for completion message: `[SUCCESS] ... The apply-patch command ran successfully.`
 
-Monitor the overall patching progress:
-
-Watch component status:
-```bash
-watch -n 60 'cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}'
-```
 
 #### 4. Confirm Operands Status
 
@@ -201,7 +195,7 @@ Check that all pods are running and healthy
 Check for pods not in Running state:
 
 ```bash
-oc get pods -n ${PROJECT_CPD_INST_OPERANDS} | grep -v Running | grep -v Completed
+oc get po -A -owide | egrep -v '([0-9])/\1' | egrep -v 'Completed'
 ```
 
 #### 3. Patch Analytics Engine Instances
