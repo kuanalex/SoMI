@@ -149,15 +149,14 @@ oc get pods -n ${PROJECT_CPD_INST_OPERANDS} | grep -v Running | grep -v Complete
 
 Confirm your CPD profile is set up and working
 ```bash
-cpd-cli service-instance list --profile=cpd-admin
+cpd-cli service-instance list --profile=${CPD_PROFILE_NAME}
 ```
 
 #### 2. Verify Patched Instance Status
 
 Check the status of the patched instance
 ```bash
-cpd-cli manage get-cr-status \
-  --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
 ## Verify Patch Application
@@ -166,8 +165,7 @@ cpd-cli manage get-cr-status \
 
 Confirm the platform and all components are running the patched version
 ```bash
-cpd-cli manage get-cr-status \
-  --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
+cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
 #### 2. Verify Pod Health
@@ -181,8 +179,9 @@ oc get pods -n ${PROJECT_CPD_INST_OPERANDS} | grep -v Running | grep -v Complete
 
 Check that all service instances are ready:
 
+List all service instances
 ```bash
-# List all service instances
-cpd-cli service-instance list \
-  --profile=cpd-admin \
-  --all-namespaces
+cpd-cli service-instance list --profile=${CPD_PROFILE_NAME} --all-namespaces
+```
+
+**End of patch activity**
