@@ -1,15 +1,15 @@
-# IBM Software Hub 5.3.1.5 to 5.3.1.11 Patch Runbook
+# IBM Software Hub 5.4.0.5 to 5.4.0.9 Patch Runbook
 
 ## Patch Context
 
-**Customer:** Banco Bradesco
+**Customer:** State of Michigan
 **Environment:** Dev
-**Patch Date:** 2026-09-04
+**Patch Date:** 2026-11-04
 **Target Patch:** Patch 11
 
 ### Components to be Patched
 
-**IBM Software Hub Components (6):** cpd_platform,wkc,datastage_ent,ws_pipelines,ws,ws_runtimes
+**IBM Software Hub Components:** cpd_platform,wkc,datastage_ent,ws_pipelines,ws,ws_runtimes
 
 ---
 
