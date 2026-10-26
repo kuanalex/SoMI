@@ -3,8 +3,11 @@
 ## Patch Context
 
 **Customer:** State of Michigan
+
 **Environment:** Dev
+
 **Patch Date:** 2026-11-04
+
 **Target Patch:** Patch 11
 
 ### Components to be Patched
@@ -51,7 +54,7 @@ cpd-cli manage list-patch
 
 For example...
 ```bash
-cpd-cli manage case-download --components=${COMPONENTS_TO_PATCH} --release=5.4.0 --patch_id=11
+cpd-cli manage case-download --components=${COMPONENTS_TO_PATCH} --release=5.4.0 --patch_id=9
 ```
    
 Mirror images to registry (if air-gapped):
@@ -154,7 +157,7 @@ Before applying the patch, verify environment variables and component status:
 
 ```bash
 # Set patch ID
-export PATCH_ID=11
+export PATCH_ID=9
 
 # Verify environment variables
 echo $PROJECT_CPD_INST_OPERATORS
