@@ -6,27 +6,17 @@
 
 **Environment:** Production
 
-**Patch Date:** 2026-09-09
+**Patch Date:** 2026-11-04
 
 **Target Patch:** Patch 9
 
+---
+
 ### Components to be Patched
 
-**IBM Software Hub Components (6):** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
+**IBM Software Hub Components:** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
 
 **Scheduling Service:** ✓ Included
-
-### Service Instances to be Updated
-
-**Services with Bulk Update (--all flag):**
-- analyticsengine (spark)
-
-
-**Analytics Engine (Apache Spark):**
-- Manual instance upgrade required (see Post-Patch Tasks section)
-
-
-
 
 ---
 
@@ -36,13 +26,11 @@
 
 ---
 
-
 ## Prerequisites
 
 **IMPORTANT:** This runbook assumes the following tasks have been completed by the cluster administrator:
 
-1. CASE files downloaded for all components on the client workstation:
-
+1. CASE files downloaded for all components on the client workstation
 ```bash
 cpd-cli manage case-download --components=${COMPONENTS_TO_PATCH} --release=5.4.0 --patch_id=9
 ```
@@ -62,10 +50,11 @@ If these prerequisites are not met, please complete them before proceeding with 
 
 **Note:** If the scheduling service is not installed in your environment, skip this section and proceed to applying the patch to the scheduling service section.
 
+---
+
 #### 1. Verify Scheduling Service Installation
 
-Check if the scheduling service is installed:
-
+Check if the scheduling service is installed
 ```bash
 oc get scheduling -A
 ```
@@ -74,28 +63,31 @@ oc get scheduling -A
 
 **If scheduling resources are found:** Continue with the steps below.
 
+---
+
 #### 2. Generate Cluster-Scoped Resources for Scheduling Service
 
-Generate the `cluster_scoped_resources.yaml` file for the scheduling service:
-
+Generate the `cluster_scoped_resources.yaml` file for the scheduling service
 ```bash
 cpd-cli manage case-download \
-  --components=scheduler \
-  --release=5.4.0 \
-  --patch_id=${PATCH_ID} \
-  --scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
-  --case_download=false \
-  --cluster_resources=true
+--components=scheduler \
+--release=5.4.0 \
+--patch_id=${PATCH_ID} \
+--scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
+--case_download=false \
+--cluster_resources=true
 ```
+
+---
 
 #### 3. Apply Cluster-Scoped Resources
 
-Apply the cluster-scoped resources commands returned in the terminal (make sure the correct cpd-cli-workspace path is referenced):
-
+Apply the cluster-scoped resources commands returned in the terminal (make sure the correct cpd-cli-workspace path is referenced)
 ```bash
 oc apply -f /root/cpd-cli-workspace/olm-utils-workspace/work/cluster_scoped_resources.yaml --force-conflicts --server-side
 ```
 
+---
 
 ## Apply Patch to Scheduling Service
 
@@ -105,8 +97,7 @@ oc apply -f /root/cpd-cli-workspace/olm-utils-workspace/work/cluster_scoped_reso
 
 #### 1. Verify Environment Variables
 
-Ensure environment variables are set from previous steps:
-
+Ensure environment variables are set from previous steps
 ```bash
 echo $PROJECT_SCHEDULING_SERVICE
 echo $PATCH_ID
@@ -120,11 +111,11 @@ echo $IMAGE_PULL_SECRET
 
 ```bash
 cpd-cli manage apply-patch \
-  --release=5.4.0 \
-  --patch_id=${PATCH_ID} \
-  --scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
-  --image_pull_prefix=${IMAGE_PULL_PREFIX} \
-  --image_pull_secret=${IMAGE_PULL_SECRET}
+--release=5.4.0 \
+--patch_id=${PATCH_ID} \
+--scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
+--image_pull_prefix=${IMAGE_PULL_PREFIX} \
+--image_pull_secret=${IMAGE_PULL_SECRET}
 ```
 
 #### 3. Monitor Scheduling Service Pods
@@ -139,25 +130,25 @@ oc get pods --namespace=${PROJECT_SCHEDULING_SERVICE}
 
 #### 1. Generate Cluster-Scoped Resources
 
-Generate the `cluster_scoped_resources.yaml` file for the instance:
-
+Generate the `cluster_scoped_resources.yaml` file for the instance
 ```bash
 cpd-cli manage case-download \
-  --components=${COMPONENTS_TO_PATCH} \
-  --release=5.4.0 \
-  --patch_id=${PATCH_ID} \
-  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
-  --case_download=false \
-  --cluster_resources=true
+--components=${COMPONENTS_TO_PATCH} \
+--release=5.4.0 \
+--patch_id=${PATCH_ID} \
+--operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+--case_download=false \
+--cluster_resources=true
 ```
 
 #### 2. Apply Cluster-Scoped Resources
 
-Apply the cluster-scoped resources commands returned in the terminal (make sure the correct cpd-cli-workspace path is referenced):
-
+Apply the cluster-scoped resources commands returned in the terminal (make sure the correct cpd-cli-workspace path is referenced)
 ```bash
 oc apply -f /root/cpd-cli-workspace/olm-utils-workspace/work/cluster_scoped_resources.yaml --force-conflicts --server-side
 ```
+
+---
 
 ## Apply Patch to Services and Components
 
@@ -167,8 +158,7 @@ oc apply -f /root/cpd-cli-workspace/olm-utils-workspace/work/cluster_scoped_reso
 
 #### 1. Verify Prerequisites
 
-Before applying the patch, verify environment variables and component status:
-
+Before applying the patch, verify environment variables and component status
 ```bash
 # Set patch ID
 export PATCH_ID=9
@@ -189,7 +179,6 @@ cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 **Note:** This command applies patches to ALL installed services and components and runs for an extended period (typically 30-90 minutes). Using `nohup` ensures the command continues if the terminal session disconnects.
 
 **Applying specific patch:**
-
 ```bash
 nohup cpd-cli manage apply-patch \
 --release=5.4.0 \
@@ -213,116 +202,58 @@ Check for completion message: `[SUCCESS] ... The apply-patch command ran success
 
 #### 4. Confirm Operands Status
 
-Confirm that the status of all operands is `Completed`:
-
+Confirm that the status of all operands is `Completed`
 ```bash
 cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
-Check for any pods not in Running state:
-
+Check for any pods not in Running state
 ```bash
 oc get po -A -owide | egrep -v '([0-9])/\1' | egrep -v 'Completed'
 ```
+
+---
 
 # Post-Patch Tasks
 
 ## Verify CPD Profile
 
-#### 1. Verify Existing Profile
+#### Verify Existing Profile
 
-Confirm your CPD profile is set up and working:
-
+Confirm your CPD profile is set up and working
 ```bash
 cpd-cli service-instance list --profile=${CPD_PROFILE_NAME}
 ```
 
-
-## Update Service Instances
-
-**IBM Documentation:** [Updating service instances](https://www.ibm.com/docs/en/software-hub/5.4.x?topic=patches-updating-service-instances)
-
-**Note:** Some services (Planning Analytics, Watson Discovery, Watson OpenScale, Watson Speech, watsonx Assistant, watsonx Orchestrate) are automatically updated during patching and require no manual action.
-
-### Common Monitoring and Verification Procedures
-
-After updating any service instance, use these commands to monitor and verify:
-
-**Monitor instance status:**
-```bash
-watch -n 30 'cpd-cli service-instance status \
-  --profile=${CPD_PROFILE_NAME} \
-  --service-type=<service-type> \
-  --all-namespaces'
-```
-
-**Verify completion:**
-```bash
-# List all instances
-cpd-cli service-instance list \
-  --profile=${CPD_PROFILE_NAME} \
-  --service-type=<service-type> \
-  --all-namespaces
-
-# Check specific instance details
-cpd-cli service-instance status \
-  --profile=${CPD_PROFILE_NAME} \
-  --service-type=<service-type> \
-  --instance-name=<instance-name> \
-  --namespace=<instance-namespace>
-```
-
 ---
 
-### Service Instance Updates
+## Service Instance Updates
 
-#### analyticsengine
+#### Patch Analytics Engine Instances
 
-Analytics Engine powered by Apache Spark
-
-Update all instances:
-```bash
-cpd-cli service-instance update \
-  --profile=${CPD_PROFILE_NAME} \
-  --service-type=spark \
-  --all
-```
-
-*Use [Common Monitoring and Verification Procedures](#common-monitoring-and-verification-procedures) above with `service-type=spark`*
-
----
-
-
-
-
-#### 2. Patch Analytics Engine Instances
-
-To upgrade Analytics Engine powered by Apache Spark service instances:
-
+To upgrade Analytics Engine powered by Apache Spark service instances
 ```bash
 cpd-cli service-instance upgrade \
-  --service-type=spark \
-  --profile=${CPD_PROFILE_NAME} \
-  --all
+--service-type=spark \
+--profile=${CPD_PROFILE_NAME} \
+--all
 ```
 
-#### 4. Verify CR, Service Instance and Pod Statuses
+#### Verify CR, Service Instance and Pod Statuses
 
-Confirm the platform and all components are running the patched version:
-
+Confirm the platform and all components are running the patched version
 ```bash
 cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 ```
 
 Check that all service instances are ready
 
-List all service instances:
+List all service instances
 ```bash
 cpd-cli service-instance list --profile=${CPD_PROFILE_NAME}
 ```
 
-Check for pods not in Running state:
-
+Check for pods not in Running state
 ```bash
 oc get po -A -owide | egrep -v '([0-9])/\1' | egrep -v 'Completed'
 ```
