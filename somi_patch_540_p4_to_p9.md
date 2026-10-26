@@ -10,6 +10,8 @@
 
 **Target Patch:** Patch 11
 
+---
+
 ### Components to be Patched
 
 **IBM Software Hub Components:** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
@@ -21,7 +23,6 @@
 2. [Post-Patch Tasks](#post-patch-tasks)
 
 ---
-
 
 ## Prerequisites
 
@@ -39,6 +40,8 @@ cpd-cli manage list-deployed-components \
 --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} \
 --all=true
 ```
+
+---
 
 ## Checking for new patches
 
