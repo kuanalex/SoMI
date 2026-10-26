@@ -9,7 +9,7 @@
 
 ### Components to be Patched
 
-**IBM Software Hub Components:** cpd_platform,wkc,datastage_ent,ws_pipelines,ws,ws_runtimes
+**IBM Software Hub Components:** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
 
 ---
 
@@ -51,14 +51,14 @@ cpd-cli manage list-patch
 
 For example...
 ```bash
-cpd-cli manage case-download --components=${COMPONENTS_TO_PATCH} --release=5.3.1 --patch_id=11
+cpd-cli manage case-download --components=${COMPONENTS_TO_PATCH} --release=5.4.0 --patch_id=11
 ```
    
 Mirror images to registry (if air-gapped):
 ```bash
 cpd-cli manage mirror-images \
 --components=${COMPONENTS_TO_PATCH} \
---release=5.3.1 \
+--release=5.4.0 \
 --target_registry=${PRIVATE_REGISTRY_LOCATION} \
 --arch=${IMAGE_ARCH} \
 --case_download=false
@@ -79,12 +79,12 @@ If these prerequisites are not met, please complete them before proceeding with 
 Generate the `cluster_scoped_resources.yaml` file for the scheduling service:
 ```bash
 cpd-cli manage case-download \
-  --components=${COMPONENTS_TO_PATCH} \
-  --release=5.3.1 \
-  --patch_id=${PATCH_ID} \
-  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
-  --case_download=false \
-  --cluster_resources=true
+--components=${COMPONENTS_TO_PATCH} \
+--release=5.4.0 \
+--patch_id=${PATCH_ID} \
+--operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+--case_download=false \
+--cluster_resources=true
 ```
 
 Apply the cluster-scoped resources commands returned in the terminal (make sure the correct cpd-cli-workspace path is referenced):
@@ -104,7 +104,7 @@ ${CPDM_OC_LOGIN}
 Apply the patch for scheduling service:
 ```bash
 cpd-cli manage apply-patch \
---release=5.3.1 \
+--release=5.4.0 \
 --patch_id=${PATCH_ID} \
 --scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
 --image_pull_prefix=${IMAGE_PULL_PREFIX} \
@@ -127,12 +127,12 @@ oc get pods --namespace=${PROJECT_SCHEDULING_SERVICE}
 Generate the `cluster_scoped_resources.yaml` file for the instance:
 ```bash
 cpd-cli manage case-download \
-  --components=${COMPONENTS_TO_PATCH} \
-  --release=5.3.1 \
-  --patch_id=${PATCH_ID} \
-  --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
-  --case_download=false \
-  --cluster_resources=true
+--components=${COMPONENTS_TO_PATCH} \
+--release=5.4.0 \
+--patch_id=${PATCH_ID} \
+--operator_ns=${PROJECT_CPD_INST_OPERATORS} \
+--case_download=false \
+--cluster_resources=true
 ```
 
 ---
@@ -199,7 +199,7 @@ cpd-cli manage get-cr-status --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS}
 
 ```bash
 nohup cpd-cli manage apply-patch \
---release=5.3.1 \
+--release=5.4.0 \
 --patch_id=${PATCH_ID} \
 --operator_ns=${PROJECT_CPD_INST_OPERATORS} \
 --instance_ns=${PROJECT_CPD_INST_OPERANDS} \
@@ -249,9 +249,9 @@ To upgrade Analytics Engine powered by Apache Spark service instances:
 
 ```bash
 cpd-cli service-instance upgrade \
-  --service-type=spark \
-  --profile=${CPD_PROFILE_NAME} \
-  --all
+--service-type=spark \
+--profile=${CPD_PROFILE_NAME} \
+--all
 ```
 
 #### 4. Verify CR, Service Instance and Pod Statuses
