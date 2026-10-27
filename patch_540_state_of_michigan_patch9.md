@@ -16,8 +16,6 @@
 
 **IBM Software Hub Components:** cpd_platform, analyticsengine, datastage_ent_plus, wkc, mantaflow, ws_pipelines
 
-**Scheduling Service:** ✓ Included
-
 ---
 
 ## Table of Contents
@@ -43,86 +41,6 @@ If these prerequisites are not met, please complete them before proceeding with 
 ---
 
 # Patch Execution
-
-## Update Cluster-Scoped Resources for Scheduling Service
-
-**IBM Documentation:** [Updating cluster-scoped resources for the scheduling service](https://www.ibm.com/docs/en/software-hub/5.4.x?topic=patches-updating-cluster-scoped-resources-scheduling-service)
-
-**Note:** If the scheduling service is not installed in your environment, skip this section and proceed to applying the patch to the scheduling service section.
-
----
-
-#### 1. Verify Scheduling Service Installation
-
-Check if the scheduling service is installed
-```bash
-oc get scheduling -A
-```
-
-**If no resources are found:** Skip this section and the next section (Apply Patch to Scheduling Service), then proceed to updating cluster-scoped resources for IBM Software Hub.
-
-**If scheduling resources are found:** Continue with the steps below.
-
----
-
-#### 2. Generate Cluster-Scoped Resources for Scheduling Service
-
-Generate the `cluster_scoped_resources.yaml` file for the scheduling service
-```bash
-cpd-cli manage case-download \
---components=scheduler \
---release=5.4.0 \
---patch_id=${PATCH_ID} \
---scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
---case_download=false \
---cluster_resources=true
-```
-
----
-
-#### 3. Apply Cluster-Scoped Resources
-
-Apply the cluster-scoped resources commands returned in the terminal (make sure the correct cpd-cli-workspace path is referenced)
-```bash
-oc apply -f /root/cpd-cli-workspace/olm-utils-workspace/work/cluster_scoped_resources.yaml --force-conflicts --server-side
-```
-
----
-
-## Apply Patch to Scheduling Service
-
-**IBM Documentation:** [Applying a patch to the scheduling service](https://www.ibm.com/docs/en/software-hub/5.4.x?topic=patches-applying-patch-scheduling-service)
-
-**Note:** If the scheduling service is not installed, this section was skipped in the previous step.
-
-#### 1. Verify Environment Variables
-
-Ensure environment variables are set from previous steps
-```bash
-echo $PROJECT_SCHEDULING_SERVICE
-echo $PATCH_ID
-echo $IMAGE_PULL_PREFIX
-echo $IMAGE_PULL_SECRET
-```
-
-#### 2. Apply Patch to Scheduling Service
-
-**Applying specific patch:**
-
-```bash
-cpd-cli manage apply-patch \
---release=5.4.0 \
---patch_id=${PATCH_ID} \
---scheduler_ns=${PROJECT_SCHEDULING_SERVICE} \
---image_pull_prefix=${IMAGE_PULL_PREFIX} \
---image_pull_secret=${IMAGE_PULL_SECRET}
-```
-
-#### 3. Monitor Scheduling Service Pods
-
-```bash
-oc get pods --namespace=${PROJECT_SCHEDULING_SERVICE}
-```
 
 ## Update Cluster-Scoped Resources for IBM Software Hub
 
