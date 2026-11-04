@@ -145,6 +145,15 @@ cpd-cli manage mirror-images --components=${COMPONENTS_TO_PATCH} --release=5.4.0
 
 ---
 
+#### Known Issue - "username/password: unauthorized: Could not find robot with specified username]"
+
+This issue was encountered during the last upgrade(s) and required configuration changes to be applied to the Quay Robot Accounts:
+
+- Add any missing repos to the Robot Account in Quay.state.mi.us/organization/dtmbcsscp4d?tab=robots
+- Add the secrets for the Robot Account to both namespaces (operators/operands)
+
+---
+
 # Patch Execution
 
 ## Update Cluster-Scoped Resources for IBM Software Hub
