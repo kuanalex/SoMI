@@ -29,6 +29,58 @@ If these prerequisites are not met, please complete them before proceeding with 
 
 ---
 
+#### Gathering information about installed components
+
+If your client workstation pulls images from the IBM Entitled Registry, ensure that the client workstation has the latest version of the olm-utils-v4 image
+
+Note: If your client workstation pulls images from a private container registry, skip this step
+
+You will run this command after you mirror images to the private container registry
+```bash
+cpd-cli manage restart-container
+```
+
+Login to the cluster
+```bash
+${CPDM_OC_LOGIN}
+```
+
+Run the following command to generate a list of the components that are installed
+```bash
+cpd-cli manage list-deployed-components --cpd_instance_ns=${PROJECT_CPD_INST_OPERANDS} --br_operator_ns=${PROJECT_INST_BR_SVC} --all=true
+```
+
+The output of the command is saved to a file named scan.yaml, which is located in the work/scan/ directory
+
+---
+
+#### Checking for new patches
+
+Run the list-patch command to generate a list of patches are available for the instance.
+```bash
+cpd-cli manage list-patch
+```
+
+The command downloads the patch-5.4.0.yaml file for the latest patch from the IBM/software-hub repository on GitHub
+
+Then, the command compares the contents of patch-5.4.0.yaml file to the contents of the scan.yaml file
+
+The output includes several sections, most importantly, a list of components that have available patches
+
+To download CASE Packages for patches, run
+```bash
+cpd-cli manage case-download --components=cpd_platform,zen... --release=5.4.0 --patch_id=<patch-id>
+```
+
+Set the COMPONENTS_TO_PATCH environment variable to the list of components that you specified when you ran the case-download command
+
+**Important**: The list of components must be the same as the list of components that were returned by the list-patch command
+```bash
+export COMPONENTS_TO_PATCH=cpd_platform,zen...
+```
+
+---
+
 # Patch Execution
 
 ## Update Cluster-Scoped Resources for IBM Software Hub
