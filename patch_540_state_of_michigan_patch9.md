@@ -11,13 +11,13 @@
 ---
 
 ## Table of Contents
-1. [Pre-Patch Execution](#patch-execution)
+1. [Pre-Patch Execution](#pre-patch-execution)
 2. [Patch Execution](#patch-execution)
 3. [Post-Patch Tasks](#post-patch-tasks)
 
 ---
 
-## Pre-Patch Execution
+# Pre-Patch Execution
 
 **IMPORTANT:** This runbook assumes the following tasks have been completed by the cluster administrator:
 
