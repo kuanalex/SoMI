@@ -11,12 +11,13 @@
 ---
 
 ## Table of Contents
-1. [Patch Execution](#patch-execution)
-2. [Post-Patch Tasks](#post-patch-tasks)
+1. [Pre-Patch Execution](#patch-execution)
+2. [Patch Execution](#patch-execution)
+3. [Post-Patch Tasks](#post-patch-tasks)
 
 ---
 
-## Prerequisites
+## Pre-Patch Execution
 
 **IMPORTANT:** This runbook assumes the following tasks have been completed by the cluster administrator:
 
@@ -66,17 +67,80 @@ The command downloads the patch-5.4.0.yaml file for the latest patch from the IB
 Then, the command compares the contents of patch-5.4.0.yaml file to the contents of the scan.yaml file
 
 The output includes several sections, most importantly, a list of components that have available patches
-
-To download CASE Packages for patches, run
 ```bash
-cpd-cli manage case-download --components=cpd_platform,zen... --release=5.4.0 --patch_id=<patch-id>
+Patch metadata is successfully downloaded '/tmp/work/offline/patch/patch-5.4.0.yaml'
+Generating merged metadata for release 5.4.0 with patch_id None
+Found patch-5.4.0.yaml
+
+Components                    Current   Available   Namespace
+---------------------------------------------------------------
+scheduler                     2.0.6     2.0.7       cpd-scheduler
+br_orchestration              5.4.7     5.4.8       ibm-cpd-scheduler-br-svc
+br_orchestration              5.4.7     5.4.8       ibm-backup-restore
+cpd_platform                  5.10.7    5.10.8      cpd-instance
+zen                           6.10.7    6.10.8      cpd-instance
+cpfs                          4.19.2    4.19.3      cpd-instance
+ibm_usage_metering            1.0.7     1.0.8       cpd-instance
+analyticsengine               5.4.5     5.4.8       cpd-instance
+ccs                           13.0.6    13.0.8      cpd-instance
+datarefinery                  13.0.4    13.0.8      cpd-instance
+datastage_ent                 5.4.7     5.4.8       cpd-instance
+datastage_ent_plus            5.4.7     5.4.8       cpd-instance
+db2u                          8.0.2     8.3.0       cpd-instance
+dmc                           5.4.2     5.4.3       cpd-instance
+dv                            3.4.2     3.4.3       cpd-instance
+ibm_neo4j                     1.4.6     1.4.8       cpd-instance
+ibm_redis_cp                  1.4.0     1.4.1       cpd-instance
+opencontent_opensearch        1.4.5     1.5.3       cpd-instance
+opencontent_fdb               5.4.3     5.4.4       cpd-instance
+postgresql                    1.28.4    1.28.5      cpd-instance
+ws_pipelines                  5.4.7     5.4.8       cpd-instance
+---------------------------------------------------------------
+Current patch id : 7
+Available patch ids : 8
+```
+
+Export the target PATCH_ID level
+```bash
+export PATCH_ID=9
+```
+
+To download CASE Packages for patches, for example
+```bash
+cpd-cli manage case-download --components=scheduler,br_orchestration,br_orchestration,cpd_platform,zen,cpfs,ibm_usage_metering,analyticsengine,ccs,datarefinery,datastage_ent,datastage_ent_plus,db2u,dmc,dv,ibm_neo4j,ibm_redis_cp,opencontent_opensearch,opencontent_fdb,postgresql,ws_pipelines --release=5.4.0 --patch_id=${PATCH_ID}
 ```
 
 Set the COMPONENTS_TO_PATCH environment variable to the list of components that you specified when you ran the case-download command
 
-**Important**: The list of components must be the same as the list of components that were returned by the list-patch command
+**Important**: The list of components must be the same as the list of components that were returned by the list-patch command, for example
 ```bash
-export COMPONENTS_TO_PATCH=cpd_platform,zen...
+export COMPONENTS_TO_PATCH=scheduler,br_orchestration,br_orchestration,cpd_platform,zen,cpfs,ibm_usage_metering,analyticsengine,ccs,datarefinery,datastage_ent,datastage_ent_plus,db2u,dmc,dv,ibm_neo4j,ibm_redis_cp,opencontent_opensearch,opencontent_fdb,postgresql,ws_pipelines
+```
+
+---
+
+#### Mirroring the images for the patch directly to the private container registry
+
+Log in to the IBM Entitled Registry registry
+```
+cpd-cli manage login-entitled-registry ${IBM_ENTITLEMENT_KEY}
+```
+
+Log in to the private container registry
+
+The following command assumes that you are using private container registry that is secured with credentials
+```
+cpd-cli manage login-private-registry ${PRIVATE_REGISTRY_LOCATION} ${PRIVATE_REGISTRY_PUSH_USER} ${PRIVATE_REGISTRY_PUSH_PASSWORD}
+```
+
+Confirm that you have access to the images that you want to mirror from the IBM Entitled Registry
+```
+cpd-cli manage list-images --components=${COMPONENTS_TO_PATCH} --release=5.4.0 --patch_id=${PATCH_ID} --inspect_source_registry=true
+```
+
+Mirror the images to the private container registry
+```
+cpd-cli manage mirror-images --components=${COMPONENTS_TO_PATCH} --release=5.4.0 --patch_id=${PATCH_ID} --target_registry=${PRIVATE_REGISTRY_LOCATION} --arch=${IMAGE_ARCH} --case_download=false
 ```
 
 ---
